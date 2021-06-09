@@ -7,10 +7,16 @@ import agents.buyer.BookBuyerGui;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.core.behaviours.ParallelBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAException;
+import jade.domain.FIPAAgentManagement.DFAgentDescription;
+import jade.domain.FIPAAgentManagement.ServiceDescription;
+import jade.gui.GuiAgent;
+import jade.gui.GuiEvent;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
-public class BookSellerAgent extends Agent{
+public class BookSellerAgent extends GuiAgent{
 	
 	protected BookSellerGui gui;
 	protected Map<String, Double> data=new HashMap<String, Double>();
@@ -27,7 +33,19 @@ public class BookSellerAgent extends Agent{
 			gui=(BookSellerGui)getArguments()[0];
 			gui.bookSellerAgent=this;
 		}
-		
+		System.out.println("DF service publication...");
+		DFAgentDescription agentDescription=new DFAgentDescription();
+		agentDescription.setName(this.getAID());
+		ServiceDescription serviceDescription=new ServiceDescription();
+		serviceDescription.setType("bookSelling");
+		serviceDescription.setName("JadeBookTrading");
+		agentDescription.addServices(serviceDescription);
+		try {
+			DFService.register(this, agentDescription);
+		} catch (FIPAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		ParallelBehaviour parallelBehaviour=new ParallelBehaviour();
 		addBehaviour(parallelBehaviour);
 		parallelBehaviour.addSubBehaviour(new CyclicBehaviour() {
@@ -55,11 +73,27 @@ public class BookSellerAgent extends Agent{
 						send(reply);
 						break;
 					}
+				}else {
+					block();
 				}
 					
 				
 			}
 		});
+	}
+	@Override
+	protected void takeDown() {
+		// TODO Auto-generated method stub
+		try {
+			DFService.deregister(this);
+		} catch (FIPAException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	@Override
+	protected void onGuiEvent(GuiEvent arg0) {
+		// TODO Auto-generated method stub
 		
 	}
 }
